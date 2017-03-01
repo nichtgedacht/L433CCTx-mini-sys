@@ -254,8 +254,8 @@ void load_default_settings(void)
     }
     else
     {
-        // write flash buffer
-        write_flash_vars((uint64_t*) flash_buf, 128, 0);
+        // write flash buffer leaving the last 8 bit location virgin
+        write_flash_vars((uint64_t*) flash_buf, 127, 0);
     }
 }
 
@@ -267,7 +267,7 @@ void start_bootloader(void)
 void config_state_switch(const char *cmd)
 {
     char buf[20];
-//    char label[8] = "DFU";
+    char label[8] = "DFU";
 
     if (strcmp(cmd, "reboot") == 0)
     {
@@ -279,19 +279,11 @@ void config_state_switch(const char *cmd)
         p_settings = (settings *) flash_buf;
         read_flash_vars((uint32_t *) flash_buf, 256, 0);
 
-        erase_flash_page();
-
-        flash_buf[127] = *(uint64_t *) "DFU";
-
-        //setting flag in flash
-        //so reborn as bootloader we can know that we should not start this live immediately again
+        // setting flag in flash
+        // so reborn as bootloader we can know that we should not start this live immediately again
         // write string "DFU" (4 bytes incl. trailing \0) to last 64 bit wide space of first half (1k) of flash page
-     //   write_flash_vars((uint64_t*) label, 1, 1016);
-
-        write_flash_vars((uint64_t*) flash_buf, 128, 0);
-
-
-        read_flash_vars((uint32_t *) flash_buf, 256, 0);
+        // this location must be virgin after an erase
+        write_flash_vars((uint64_t*) label, 1, 1016);
 
         start_bootloader();
     }
@@ -483,7 +475,8 @@ void receive_settings(void)
         {
             if (p_settings->magic == 0xdb)
             {
-                if (write_flash_vars((uint64_t*) received_data, 256, 0) != HAL_OK)
+                // leaving th last 8 bit location virgin
+                if (write_flash_vars((uint64_t*) received_data, 127, 0) != HAL_OK)
                 {
                     Error_Handler();
                 }

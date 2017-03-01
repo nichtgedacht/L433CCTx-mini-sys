@@ -484,7 +484,8 @@ int main(void)
                             }
                             else
                             {
-                                if (write_flash_vars((uint64_t*) flash_buf, 128, 0) != HAL_OK)
+                                // keep last 64 bit wide location virgin for DFU flag write only 127 of 128 * 8 bytes
+                                if (write_flash_vars((uint64_t*) flash_buf, 127, 0) != HAL_OK)
                                 {
                                     Error_Handler();
                                 }
